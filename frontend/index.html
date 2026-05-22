@@ -163,6 +163,29 @@
       padding: 20px 20px 12px;
       text-align: center;
       flex-shrink: 0;
+      position: relative;
+    }
+    .back-btn {
+      position: absolute;
+      left: 16px;
+      top: 20px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--bg);
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-btn:active {
+      background: var(--border);
+      color: var(--text);
     }
     .todo-header h1 {
       font-size: 20px;
@@ -388,6 +411,7 @@
   <!-- ═══ TODO ═══ -->
   <div id="page-todo">
     <div class="todo-header">
+      <button class="back-btn" id="btn-back" onclick="leaveRoom()">←</button>
       <h1>💕 情侣待办</h1>
       <div class="room-code">房间号 · <span id="display-room-id"></span></div>
       <span class="connection-status connecting" id="connection-status">连接中...</span>
@@ -409,9 +433,8 @@
 
 <script>
 // ─── Config ──────────────────────────────────────────────
-const API_BASE = window.location.origin.includes('localhost' || '127.0.0.1' || '192.168')
-  ? 'http://localhost:3001'
-  : window.location.origin;
+const IS_DEV = /localhost|127\.0\.0\.1|192\.168/.test(window.location.origin);
+const API_BASE = IS_DEV ? 'http://localhost:3001' : window.location.origin;
 const WS_URL = API_BASE.replace(/^http/, 'ws');
 
 let roomId = null;
@@ -511,11 +534,27 @@ document.getElementById('room-input').addEventListener('keydown', function(e) {
 
 function enterRoom(id) {
   roomId = id;
+  localStorage.setItem('couple_todo_roomId', id);
   document.getElementById('display-room-id').textContent = id;
   showPage('todo');
   connectWebSocket();
   loadTodos();
   document.getElementById('todo-input').focus();
+}
+
+function leaveRoom() {
+  // Close WebSocket
+  if (ws) {
+    ws.onclose = null; // prevent auto-reconnect
+    ws.close();
+    ws = null;
+  }
+  // Clear saved room data
+  roomId = null;
+  todos = [];
+  localStorage.removeItem('couple_todo_roomId');
+  // Go back to home
+  showPage('home');
 }
 
 // ─── WEBSOCKET ───────────────────────────────────────────
@@ -612,6 +651,7 @@ async function addTodo() {
       document.getElementById('todo-list').scrollTop = document.getElementById('todo-list').scrollHeight;
     }, 50);
   } catch (e) {
+    console.error('添加待办失败:', e.message);
     showToast('添加失败');
   } finally {
     btn.disabled = false;
@@ -735,7 +775,13 @@ document.getElementById('todo-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') addTodo();
 });
 
-showPage('home');
+// ─── Page init ───────────────────────────────────────────
+const savedRoomId = localStorage.getItem('couple_todo_roomId');
+if (savedRoomId) {
+  enterRoom(savedRoomId);
+} else {
+  showPage('home');
+}
 </script>
 </body>
 </html>
