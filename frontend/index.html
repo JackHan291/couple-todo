@@ -1080,7 +1080,7 @@ function renderAnniversaries() {
     const days = calcDays(a.date);
     const emoji = getAnniversaryEmoji(a.name);
     const daysText = days >= 0 ? `${days}天` : `${Math.abs(days)}天后`;
-    const label = days >= 0 ? '已在一起' : '倒计时';
+    const label = days >= 0 ? '第' : '距';
     return `
       <div class="anniversary-card">
         <span class="anniversary-emoji">${emoji}</span>
