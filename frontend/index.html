@@ -140,6 +140,52 @@
     }
     .error-text.visible { display: block; }
 
+    .pinned-room-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pinned-room-card:active {
+      transform: scale(0.97);
+      background: #ffeef2;
+    }
+    .pinned-room-code {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 4px;
+    }
+    .pinned-room-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .pinned-room-remove {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .pinned-room-remove:active {
+      color: #ff4444;
+      background: #fff0f0;
+    }
+
     .loading-spinner {
       display: inline-block;
       width: 20px;
@@ -399,6 +445,15 @@
     <div class="logo-icon">💕</div>
     <div class="logo-title">情侣待办</div>
     <div class="logo-sub">两个人的小目标，一起完成吧</div>
+
+    <div id="my-rooms" style="display:none; width:100%; max-width:320px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+        <span style="font-size:14px; font-weight:600; color:var(--text-secondary);">📌 我的房间</span>
+        <button id="btn-clear-rooms" style="margin-left:auto; border:none; background:transparent; color:#ccc; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:6px;" onclick="clearPinnedRooms()">清空</button>
+      </div>
+      <div id="my-rooms-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+
     <button class="home-btn btn-primary" id="btn-create-room" onclick="createRoom()">✨ 创建房间</button>
     <div class="home-divider"><span>或者</span></div>
     <div class="room-input-group">
@@ -445,6 +500,57 @@ let editingTodoId = null;
 function showPage(page) {
   document.getElementById('page-home').style.display = page === 'home' ? 'flex' : 'none';
   document.getElementById('page-todo').style.display = page === 'todo' ? 'flex' : 'none';
+  if (page === 'home') renderPinnedRooms();
+}
+
+// ─── 置顶房间 ────────────────────────────────────────
+function getPinnedRooms() {
+  try { return JSON.parse(localStorage.getItem('couple_todo_pinned') || '[]'); }
+  catch { return []; }
+}
+
+function savePinnedRooms(rooms) {
+  localStorage.setItem('couple_todo_pinned', JSON.stringify(rooms));
+}
+
+function addPinnedRoom(id) {
+  const rooms = getPinnedRooms();
+  if (!rooms.includes(id)) {
+    rooms.unshift(id);
+    savePinnedRooms(rooms);
+    renderPinnedRooms();
+  }
+}
+
+function removePinnedRoom(id) {
+  const rooms = getPinnedRooms().filter(r => r !== id);
+  savePinnedRooms(rooms);
+  renderPinnedRooms();
+}
+
+function clearPinnedRooms() {
+  savePinnedRooms([]);
+  renderPinnedRooms();
+}
+
+function renderPinnedRooms() {
+  const container = document.getElementById('my-rooms');
+  const list = document.getElementById('my-rooms-list');
+  const rooms = getPinnedRooms();
+
+  if (rooms.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+  list.innerHTML = rooms.map(id => `
+    <div class="pinned-room-card" onclick="enterRoom('${id}')">
+      <span class="pinned-room-code">${id}</span>
+      <span class="pinned-room-label">点击进入</span>
+      <button class="pinned-room-remove" onclick="event.stopPropagation(); removePinnedRoom('${id}')">✕</button>
+    </div>
+  `).join('');
 }
 
 async function api(method, path, body) {
@@ -534,6 +640,7 @@ document.getElementById('room-input').addEventListener('keydown', function(e) {
 
 function enterRoom(id) {
   roomId = id;
+  addPinnedRoom(id);
   localStorage.setItem('couple_todo_roomId', id);
   document.getElementById('display-room-id').textContent = id;
   showPage('todo');
