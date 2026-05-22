@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>💕 情侣待办</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #ff6b9d;
+      --primary-light: #ff8fab;
+      --primary-dark: #e8537a;
+      --bg: #fff5f7;
+      --card: #ffffff;
+      --text: #2d2d2d;
+      --text-secondary: #888;
+      --border: #ffe0e6;
+      --done: #bbb;
+      --shadow: 0 2px 12px rgba(255, 107, 157, 0.1);
+    }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    input, button, textarea { font-family: inherit; }
+
+    #app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #page-home {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      flex: 1;
+      text-align: center;
+    }
+    .logo-icon { font-size: 64px; margin-bottom: 8px; }
+    .logo-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .logo-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .home-btn {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .home-btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4); }
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-outline:hover { background: #fff0f4; }
+
+    .home-divider {
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      line-height: 0.1em;
+      margin: 20px 0;
+    }
+    .home-divider span {
+      background: var(--card);
+      padding: 0 12px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .room-input-group {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .room-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 6px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .room-input:focus { border-color: var(--primary); }
+    .room-input::placeholder {
+      letter-spacing: 1px;
+      font-weight: 400;
+      color: #ccc;
+    }
+    .room-input-error { border-color: #ff4444; }
+    .error-text {
+      color: #ff4444;
+      font-size: 13px;
+      margin-top: -4px;
+      display: none;
+    }
+    .error-text.visible { display: block; }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #page-todo {
+      display: none;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    .todo-header {
+      padding: 20px 20px 12px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .todo-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .todo-header .room-code {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .todo-header .room-code span {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 15px;
+      letter-spacing: 2px;
+    }
+    .connection-status {
+      font-size: 11px;
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .connection-status.connected {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .connection-status.disconnected {
+      background: #fbe9e7;
+      color: #c62828;
+    }
+    .connection-status.connecting {
+      background: #fff8e1;
+      color: #f57f17;
+    }
+
+    .todo-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 16px 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      gap: 10px;
+      transition: all 0.2s;
+      animation: slideIn 0.25s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .todo-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2.5px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .todo-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .todo-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .todo-text {
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.4;
+      word-break: break-word;
+      cursor: text;
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: background 0.15s;
+      min-height: 24px;
+    }
+    .todo-text.done {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+    .todo-text.editing {
+      background: white;
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .todo-delete {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .todo-delete:hover, .todo-delete:active {
+      color: #ff4444;
+      background: #fff0f0;
+    }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; line-height: 1.6; }
+
+    .todo-input-bar {
+      flex-shrink: 0;
+      padding: 12px 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      background: var(--card);
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .todo-input-bar input {
+      flex: 1;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .todo-input-bar input:focus { border-color: var(--primary); }
+    .todo-input-bar button {
+      width: 54px;
+      height: 54px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(255,107,157,0.25);
+    }
+    .todo-input-bar button:active { transform: scale(0.92); }
+    .todo-input-bar button:disabled { opacity: 0.5; transform: none; }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.visible { opacity: 1; }
+
+    @media (max-width: 480px) {
+      #app { max-width: 100%; }
+      .logo-icon { font-size: 56px; }
+      .logo-title { font-size: 24px; }
+    }
+    @media (min-width: 481px) {
+      body { padding: 20px; }
+      #app {
+        min-height: 90vh;
+        max-height: 90vh;
+        border-radius: 20px;
+      }
+      #page-todo { height: 90vh; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══ HOME ═══ -->
+  <div id="page-home">
+    <div class="logo-icon">💕</div>
+    <div class="logo-title">情侣待办</div>
+    <div class="logo-sub">两个人的小目标，一起完成吧</div>
+    <button class="home-btn btn-primary" id="btn-create-room" onclick="createRoom()">✨ 创建房间</button>
+    <div class="home-divider"><span>或者</span></div>
+    <div class="room-input-group">
+      <input class="room-input" id="room-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="输入6位房间号" autocomplete="off">
+      <div class="error-text" id="room-error">房间号不存在，请检查后重试</div>
+      <button class="home-btn btn-outline" id="btn-join-room" onclick="joinRoom()">🔗 加入房间</button>
+    </div>
+  </div>
+
+  <!-- ═══ TODO ═══ -->
+  <div id="page-todo">
+    <div class="todo-header">
+      <h1>💕 情侣待办</h1>
+      <div class="room-code">房间号 · <span id="display-room-id"></span></div>
+      <span class="connection-status connecting" id="connection-status">连接中...</span>
+    </div>
+    <div class="todo-list" id="todo-list">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🎯</div>
+        <p>写下你们的第一个小目标吧～</p>
+      </div>
+    </div>
+    <div class="todo-input-bar">
+      <input type="text" id="todo-input" placeholder="写点什么..." maxlength="200" autocomplete="off">
+      <button id="btn-add-todo" onclick="addTodo()">＋</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────
+const API_BASE = window.location.origin.includes('localhost' || '127.0.0.1' || '192.168')
+  ? 'http://localhost:3001'
+  : window.location.origin;
+const WS_URL = API_BASE.replace(/^http/, 'ws');
+
+let roomId = null;
+let todos = [];
+let ws = null;
+let editingTodoId = null;
+
+function showPage(page) {
+  document.getElementById('page-home').style.display = page === 'home' ? 'flex' : 'none';
+  document.getElementById('page-todo').style.display = page === 'todo' ? 'flex' : 'none';
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(`${API_BASE}${path}`, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+let toastTimeout = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('visible'), 2500);
+}
+
+// ─── HOME ────────────────────────────────────────────────
+
+async function createRoom() {
+  const btn = document.getElementById('btn-create-room');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span>创建中...';
+  try {
+    const data = await api('POST', '/api/rooms');
+    enterRoom(data.roomId);
+  } catch (e) {
+    showToast('创建失败，请稍后重试');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ 创建房间';
+  }
+}
+
+async function joinRoom() {
+  const input = document.getElementById('room-input');
+  const code = input.value.trim();
+  const errorEl = document.getElementById('room-error');
+
+  if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    input.classList.add('room-input-error');
+    errorEl.textContent = '请输入6位数字房间号';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  const btn = document.getElementById('btn-join-room');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span>加入中...';
+  try {
+    const data = await api('GET', `/api/rooms/${code}`);
+    if (!data.exists) {
+      input.classList.add('room-input-error');
+      errorEl.textContent = '房间号不存在，请检查后重试';
+      errorEl.classList.add('visible');
+      return;
+    }
+    errorEl.classList.remove('visible');
+    input.classList.remove('room-input-error');
+    enterRoom(code);
+  } catch (e) {
+    showToast('加入失败，请稍后重试');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔗 加入房间';
+  }
+}
+
+document.getElementById('room-input').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+  this.classList.remove('room-input-error');
+  document.getElementById('room-error').classList.remove('visible');
+});
+document.getElementById('room-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') joinRoom();
+});
+
+// ─── ENTER ROOM ──────────────────────────────────────────
+
+function enterRoom(id) {
+  roomId = id;
+  document.getElementById('display-room-id').textContent = id;
+  showPage('todo');
+  connectWebSocket();
+  loadTodos();
+  document.getElementById('todo-input').focus();
+}
+
+// ─── WEBSOCKET ───────────────────────────────────────────
+
+function connectWebSocket() {
+  const base = WS_URL.replace(/\/$/, '');
+  ws = new WebSocket(`${base}`);
+
+  updateConnectionStatus('connecting');
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', roomId }));
+    updateConnectionStatus('connected');
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      handleWSMessage(msg);
+    } catch (e) {
+      console.error('WS parse error:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    updateConnectionStatus('disconnected');
+    setTimeout(() => {
+      if (roomId) connectWebSocket();
+    }, 2000);
+  };
+
+  ws.onerror = () => {
+    ws.close();
+  };
+}
+
+function updateConnectionStatus(status) {
+  const el = document.getElementById('connection-status');
+  el.className = 'connection-status ' + status;
+  if (status === 'connected') el.textContent = '🟢 已连接';
+  else if (status === 'connecting') el.textContent = '🟡 连接中...';
+  else el.textContent = '🔴 已断开';
+}
+
+function handleWSMessage(msg) {
+  switch (msg.type) {
+    case 'todo:created':
+      if (!todos.find(t => t.id === msg.todo.id)) {
+        todos.push(msg.todo);
+        todos.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        renderTodos();
+      }
+      break;
+    case 'todo:updated':
+      const idx = todos.findIndex(t => t.id === msg.todo.id);
+      if (idx !== -1) {
+        todos[idx] = msg.todo;
+        renderTodos();
+      }
+      break;
+    case 'todo:deleted':
+      todos = todos.filter(t => t.id !== msg.todoId);
+      renderTodos();
+      break;
+  }
+}
+
+// ─── TODO CRUD ───────────────────────────────────────────
+
+async function loadTodos() {
+  try {
+    const data = await api('GET', `/api/rooms/${roomId}/todos`);
+    todos = data;
+    renderTodos();
+  } catch (e) {
+    console.error('Load todos failed:', e);
+  }
+}
+
+async function addTodo() {
+  const input = document.getElementById('todo-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('btn-add-todo');
+  btn.disabled = true;
+  try {
+    const todo = await api('POST', `/api/rooms/${roomId}/todos`, { text });
+    todos.push(todo);
+    renderTodos();
+    input.value = '';
+    input.focus();
+    setTimeout(() => {
+      document.getElementById('todo-list').scrollTop = document.getElementById('todo-list').scrollHeight;
+    }, 50);
+  } catch (e) {
+    showToast('添加失败');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleTodo(id, currentDone) {
+  try {
+    await api('PATCH', `/api/rooms/${roomId}/todos/${id}`, { done: !currentDone });
+    const todo = todos.find(t => t.id === id);
+    if (todo) todo.done = !currentDone;
+    renderTodos();
+  } catch (e) {
+    showToast('操作失败');
+  }
+}
+
+async function deleteTodo(id) {
+  try {
+    await api('DELETE', `/api/rooms/${roomId}/todos/${id}`);
+    todos = todos.filter(t => t.id !== id);
+    renderTodos();
+  } catch (e) {
+    showToast('删除失败');
+  }
+}
+
+async function saveEdit(id, newText) {
+  if (!newText.trim()) { renderTodos(); return; }
+  try {
+    await api('PUT', `/api/rooms/${roomId}/todos/${id}`, { text: newText.trim() });
+    const todo = todos.find(t => t.id === id);
+    if (todo) todo.text = newText.trim();
+    renderTodos();
+  } catch (e) {
+    showToast('编辑失败');
+    renderTodos();
+  }
+}
+
+// ─── RENDER ──────────────────────────────────────────────
+
+function renderTodos() {
+  const container = document.getElementById('todo-list');
+  const emptyState = document.getElementById('empty-state');
+
+  if (todos.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(emptyState);
+    return;
+  }
+
+  container.innerHTML = '';
+
+  todos.forEach(todo => {
+    const item = document.createElement('div');
+    item.className = 'todo-item';
+
+    const checkbox = document.createElement('div');
+    checkbox.className = 'todo-checkbox' + (todo.done ? ' checked' : '');
+    checkbox.onclick = () => toggleTodo(todo.id, todo.done);
+    item.appendChild(checkbox);
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'todo-text' + (todo.done ? ' done' : '');
+    textSpan.textContent = todo.text;
+    textSpan.dataset.id = todo.id;
+    textSpan.onclick = () => startEditing(textSpan, todo);
+    item.appendChild(textSpan);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'todo-delete';
+    delBtn.textContent = '✕';
+    delBtn.onclick = () => deleteTodo(todo.id);
+    item.appendChild(delBtn);
+
+    container.appendChild(item);
+  });
+
+  if (emptyState.parentNode) emptyState.remove();
+}
+
+// ─── INLINE EDIT ─────────────────────────────────────────
+
+function startEditing(span, todo) {
+  if (todo.done) return;
+  if (editingTodoId) return;
+
+  editingTodoId = todo.id;
+  span.className = 'todo-text editing';
+  span.contentEditable = true;
+  span.focus();
+
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(span);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  const finish = (save) => {
+    if (!editingTodoId) return;
+    span.contentEditable = false;
+    editingTodoId = null;
+    if (save && span.textContent.trim() && span.textContent.trim() !== todo.text) {
+      saveEdit(todo.id, span.textContent.trim());
+    } else {
+      span.textContent = todo.text;
+      renderTodos();
+    }
+  };
+
+  span.onblur = () => finish(true);
+  span.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+    if (e.key === 'Escape') { finish(false); }
+  };
+}
+
+document.getElementById('todo-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addTodo();
+});
+
+showPage('home');
+</script>
+</body>
+</html>
