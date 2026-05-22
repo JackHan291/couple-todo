@@ -10,16 +10,18 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --primary: #ff6b9d;
-      --primary-light: #ff8fab;
-      --primary-dark: #e8537a;
-      --bg: #fff5f7;
+      --primary: #e9405f;
+      --primary-light: #ff6b85;
+      --primary-dark: #c72a48;
+      --bg: #f5f5f7;
       --card: #ffffff;
-      --text: #2d2d2d;
-      --text-secondary: #888;
-      --border: #ffe0e6;
-      --done: #bbb;
-      --shadow: 0 2px 12px rgba(255, 107, 157, 0.1);
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --border: #e5e5ea;
+      --done: #c7c7cc;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --radius: 12px;
+      --radius-lg: 16px;
     }
     body {
       font-family: 'Noto Sans SC', -apple-system, sans-serif;
@@ -36,8 +38,7 @@
       width: 100%;
       max-width: 480px;
       min-height: 100dvh;
-      background: var(--card);
-      box-shadow: var(--shadow);
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       position: relative;
@@ -56,7 +57,7 @@
     .logo-title {
       font-size: 28px;
       font-weight: 700;
-      color: var(--primary);
+      color: var(--text);
       margin-bottom: 4px;
     }
     .logo-sub {
@@ -67,28 +68,26 @@
     .home-btn {
       width: 100%;
       max-width: 320px;
-      padding: 16px;
+      padding: 14px;
       border: none;
-      border-radius: 14px;
-      font-size: 17px;
+      border-radius: var(--radius);
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .home-btn:active { transform: scale(0.97); }
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      background: var(--primary);
       color: white;
-      box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
     }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4); }
+    .btn-primary:hover { opacity: 0.92; }
     .btn-outline {
       background: transparent;
       color: var(--primary);
-      border: 2px solid var(--primary);
+      border: 1.5px solid var(--primary);
     }
-    .btn-outline:hover { background: #fff0f4; }
 
     .home-divider {
       width: 100%;
@@ -96,10 +95,10 @@
       text-align: center;
       border-bottom: 1px solid var(--border);
       line-height: 0.1em;
-      margin: 20px 0;
+      margin: 16px 0;
     }
     .home-divider span {
-      background: var(--card);
+      background: var(--bg);
       padding: 0 12px;
       color: var(--text-secondary);
       font-size: 13px;
@@ -115,25 +114,29 @@
     .room-input {
       width: 100%;
       padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
       font-size: 18px;
       text-align: center;
       letter-spacing: 6px;
       font-weight: 700;
       color: var(--text);
       outline: none;
-      transition: border-color 0.2s;
+      background: var(--card);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .room-input:focus { border-color: var(--primary); }
+    .room-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(233,64,95,0.1);
+    }
     .room-input::placeholder {
       letter-spacing: 1px;
       font-weight: 400;
-      color: #ccc;
+      color: #bbb;
     }
-    .room-input-error { border-color: #ff4444; }
+    .room-input-error { border-color: #ff3b30 !important; }
     .error-text {
-      color: #ff4444;
+      color: #ff3b30;
       font-size: 13px;
       margin-top: -4px;
       display: none;
@@ -145,15 +148,16 @@
       align-items: center;
       gap: 10px;
       padding: 12px 14px;
-      background: var(--bg);
-      border-radius: 12px;
+      background: var(--card);
+      border-radius: var(--radius);
       cursor: pointer;
       transition: all 0.15s;
+      box-shadow: var(--shadow);
       -webkit-tap-highlight-color: transparent;
     }
     .pinned-room-card:active {
       transform: scale(0.97);
-      background: #ffeef2;
+      background: #f2f2f6;
     }
     .pinned-room-code {
       font-size: 18px;
@@ -171,7 +175,7 @@
       height: 26px;
       border: none;
       background: transparent;
-      color: #ccc;
+      color: #c7c7cc;
       font-size: 14px;
       cursor: pointer;
       border-radius: 50%;
@@ -182,8 +186,8 @@
       transition: all 0.15s;
     }
     .pinned-room-remove:active {
-      color: #ff4444;
-      background: #fff0f0;
+      color: #ff3b30;
+      background: #f2f2f6;
     }
 
     .loading-spinner {
@@ -206,55 +210,58 @@
     }
 
     .todo-header {
-      padding: 20px 20px 12px;
+      padding: 16px 16px 10px;
       text-align: center;
       flex-shrink: 0;
       position: relative;
+      background: var(--bg);
     }
     .back-btn {
       position: absolute;
-      left: 16px;
-      top: 20px;
-      width: 36px;
-      height: 36px;
+      left: 12px;
+      top: 16px;
+      width: 32px;
+      height: 32px;
       border: none;
-      background: var(--bg);
+      background: var(--card);
       border-radius: 50%;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-secondary);
       transition: all 0.15s;
+      box-shadow: var(--shadow);
       -webkit-tap-highlight-color: transparent;
     }
     .back-btn:active {
-      background: var(--border);
+      background: #f2f2f6;
       color: var(--text);
     }
     .todo-header h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      color: var(--primary);
+      color: var(--text);
     }
     .todo-header .room-code {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
       margin-top: 2px;
     }
     .todo-header .room-code span {
       font-weight: 600;
       color: var(--primary);
-      font-size: 15px;
+      font-size: 14px;
       letter-spacing: 2px;
     }
     .connection-status {
-      font-size: 11px;
+      font-size: 10px;
       display: inline-block;
       margin-top: 4px;
       padding: 2px 8px;
       border-radius: 10px;
+      font-weight: 500;
     }
     .connection-status.connected {
       background: #e8f5e9;
@@ -279,13 +286,13 @@
       align-items: center;
       gap: 10px;
       padding: 12px 14px;
-      background: linear-gradient(135deg, #fff5f7, #ffe8ee);
-      border-radius: 14px;
+      background: var(--card);
+      border-radius: var(--radius);
       margin-bottom: 6px;
-      border: 1.5px solid #ffd6e0;
+      box-shadow: var(--shadow);
     }
     .anniversary-emoji {
-      font-size: 28px;
+      font-size: 26px;
       flex-shrink: 0;
     }
     .anniversary-info {
@@ -322,7 +329,7 @@
       height: 26px;
       border: none;
       background: transparent;
-      color: #ccc;
+      color: #c7c7cc;
       font-size: 13px;
       cursor: pointer;
       border-radius: 50%;
@@ -334,13 +341,13 @@
     }
     .anniversary-edit:active {
       color: var(--primary);
-      background: #fff0f4;
+      background: #f2f2f6;
     }
     .anniversary-add-btn {
       width: 100%;
       padding: 10px;
       border: 1.5px dashed var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius);
       background: transparent;
       color: var(--text-secondary);
       font-size: 14px;
@@ -350,16 +357,17 @@
     .anniversary-add-btn:active {
       border-color: var(--primary);
       color: var(--primary);
-      background: #fff0f4;
+      background: #f2f2f6;
     }
     .anniversary-form {
       display: flex;
       flex-direction: column;
       gap: 8px;
       padding: 12px 14px;
-      background: var(--bg);
-      border-radius: 14px;
+      background: var(--card);
+      border-radius: var(--radius);
       margin-bottom: 6px;
+      box-shadow: var(--shadow);
     }
     .anniversary-form-row {
       display: flex;
@@ -368,20 +376,22 @@
     }
     .anniversary-form input {
       padding: 10px 12px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
       font-size: 15px;
       outline: none;
-      transition: border-color 0.2s;
+      background: var(--bg);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .anniversary-form input:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(233,64,95,0.1);
     }
     .anniversary-form input[type="text"] {
       flex: 1;
     }
     .anniversary-form input[type="date"] {
-      width: 150px;
+      width: 145px;
       flex-shrink: 0;
     }
     .anniversary-form-actions {
@@ -392,7 +402,7 @@
     .anniversary-form-actions button {
       padding: 8px 16px;
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -413,29 +423,30 @@
     .todo-list {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 16px 8px;
+      padding: 4px 16px 8px;
       -webkit-overflow-scrolling: touch;
     }
     .todo-item {
       display: flex;
       align-items: center;
       padding: 12px 14px;
-      background: var(--bg);
-      border-radius: 12px;
+      background: var(--card);
+      border-radius: var(--radius);
       margin-bottom: 8px;
       gap: 10px;
       transition: all 0.2s;
       animation: slideIn 0.25s ease-out;
+      box-shadow: var(--shadow);
     }
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .todo-checkbox {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      border: 2.5px solid var(--primary);
+      border: 2px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -451,7 +462,7 @@
     .todo-checkbox.checked::after {
       content: '✓';
       color: white;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
     }
     .todo-text {
@@ -463,14 +474,14 @@
       padding: 2px 4px;
       border-radius: 6px;
       transition: background 0.15s;
-      min-height: 24px;
+      min-height: 22px;
     }
     .todo-text.done {
       color: var(--done);
       text-decoration: line-through;
     }
     .todo-text.editing {
-      background: white;
+      background: var(--card);
       outline: 2px solid var(--primary);
       outline-offset: 2px;
     }
@@ -479,8 +490,8 @@
       height: 28px;
       border: none;
       background: transparent;
-      color: #ccc;
-      font-size: 18px;
+      color: #c7c7cc;
+      font-size: 16px;
       cursor: pointer;
       border-radius: 50%;
       display: flex;
@@ -491,8 +502,8 @@
       -webkit-tap-highlight-color: transparent;
     }
     .todo-delete:hover, .todo-delete:active {
-      color: #ff4444;
-      background: #fff0f0;
+      color: #ff3b30;
+      background: #f2f2f6;
     }
     .empty-state {
       display: flex;
@@ -508,56 +519,60 @@
 
     .todo-input-bar {
       flex-shrink: 0;
-      padding: 12px 16px 20px;
+      padding: 10px 16px 20px;
       border-top: 1px solid var(--border);
       display: flex;
       gap: 10px;
-      background: var(--card);
+      background: var(--bg);
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
     .todo-input-bar input {
       flex: 1;
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
       font-size: 16px;
       outline: none;
-      transition: border-color 0.2s;
+      background: var(--card);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .todo-input-bar input:focus { border-color: var(--primary); }
+    .todo-input-bar input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(233,64,95,0.1);
+    }
     .todo-input-bar button {
-      width: 54px;
-      height: 54px;
+      width: 46px;
+      height: 46px;
       border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: var(--radius);
+      background: var(--primary);
       color: white;
-      font-size: 24px;
+      font-size: 22px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(255,107,157,0.25);
     }
     .todo-input-bar button:active { transform: scale(0.92); }
     .todo-input-bar button:disabled { opacity: 0.5; transform: none; }
 
     .toast {
       position: fixed;
-      bottom: 80px;
+      bottom: 90px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.8);
       color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
+      padding: 8px 18px;
+      border-radius: var(--radius);
       font-size: 14px;
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
       z-index: 100;
+      backdrop-filter: blur(8px);
     }
     .toast.visible { opacity: 1; }
 
@@ -567,11 +582,12 @@
       .logo-title { font-size: 24px; }
     }
     @media (min-width: 481px) {
-      body { padding: 20px; }
+      body { padding: 16px; }
       #app {
         min-height: 90vh;
         max-height: 90vh;
-        border-radius: 20px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
       }
       #page-todo { height: 90vh; }
     }
