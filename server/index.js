@@ -145,6 +145,79 @@ app.delete('/api/rooms/:roomId/todos/:todoId', (req, res) => {
   res.json({ success: true });
 });
 
+// ─── Anniversary CRUD API ─────────────────────────────────
+
+app.get('/api/rooms/:roomId/anniversaries', (req, res) => {
+  const items = db.prepare(
+    'SELECT id, name, date FROM anniversaries WHERE room_id = ? ORDER BY created_at ASC'
+  ).all(req.params.roomId);
+  res.json(items);
+});
+
+app.post('/api/rooms/:roomId/anniversaries', (req, res) => {
+  const { roomId } = req.params;
+  const { name, date } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+  if (!date) {
+    return res.status(400).json({ error: 'date is required' });
+  }
+
+  const room = db.prepare('SELECT id FROM rooms WHERE id = ?').get(roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'room not found' });
+  }
+
+  const id = crypto.randomUUID();
+  db.prepare('INSERT INTO anniversaries (id, room_id, name, date) VALUES (?, ?, ?, ?)').run(id, roomId, name.trim(), date);
+  const item = db.prepare('SELECT id, name, date FROM anniversaries WHERE id = ?').get(id);
+
+  wsBroadcast.broadcast(roomId, { type: 'anniversary:created', anniversary: item });
+
+  res.status(201).json(item);
+});
+
+app.put('/api/rooms/:roomId/anniversaries/:anniversaryId', (req, res) => {
+  const { roomId, anniversaryId } = req.params;
+  const { name, date } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+  if (!date) {
+    return res.status(400).json({ error: 'date is required' });
+  }
+
+  const result = db.prepare(
+    'UPDATE anniversaries SET name = ?, date = ? WHERE id = ? AND room_id = ?'
+  ).run(name.trim(), date, anniversaryId, roomId);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'anniversary not found' });
+  }
+
+  const item = db.prepare('SELECT id, name, date FROM anniversaries WHERE id = ?').get(anniversaryId);
+  wsBroadcast.broadcast(roomId, { type: 'anniversary:updated', anniversary: item });
+
+  res.json(item);
+});
+
+app.delete('/api/rooms/:roomId/anniversaries/:anniversaryId', (req, res) => {
+  const { roomId, anniversaryId } = req.params;
+
+  const result = db.prepare('DELETE FROM anniversaries WHERE id = ? AND room_id = ?').run(anniversaryId, roomId);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'anniversary not found' });
+  }
+
+  wsBroadcast.broadcast(roomId, { type: 'anniversary:deleted', anniversaryId });
+
+  res.json({ success: true });
+});
+
 // ─── SPA fallback: serve index.html for any non-API route ──
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));

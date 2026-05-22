@@ -269,6 +269,147 @@
       color: #f57f17;
     }
 
+    /* ─── 纪念日 ─── */
+    .anniversary-section {
+      padding: 0 16px 8px;
+      flex-shrink: 0;
+    }
+    .anniversary-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #fff5f7, #ffe8ee);
+      border-radius: 14px;
+      margin-bottom: 6px;
+      border: 1.5px solid #ffd6e0;
+    }
+    .anniversary-emoji {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .anniversary-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .anniversary-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .anniversary-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .anniversary-days {
+      text-align: right;
+      flex-shrink: 0;
+      min-width: 60px;
+    }
+    .anniversary-days-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.1;
+    }
+    .anniversary-days-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .anniversary-edit {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .anniversary-edit:active {
+      color: var(--primary);
+      background: #fff0f4;
+    }
+    .anniversary-add-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .anniversary-add-btn:active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #fff0f4;
+    }
+    .anniversary-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: 14px;
+      margin-bottom: 6px;
+    }
+    .anniversary-form-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .anniversary-form input {
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .anniversary-form input:focus {
+      border-color: var(--primary);
+    }
+    .anniversary-form input[type="text"] {
+      flex: 1;
+    }
+    .anniversary-form input[type="date"] {
+      width: 150px;
+      flex-shrink: 0;
+    }
+    .anniversary-form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .anniversary-form-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .anniversary-form-actions button:active {
+      transform: scale(0.95);
+    }
+    .anniversary-form-save {
+      background: var(--primary);
+      color: white;
+    }
+    .anniversary-form-cancel {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
     .todo-list {
       flex: 1;
       overflow-y: auto;
@@ -482,6 +623,20 @@
       <div class="room-code">房间号 · <span id="display-room-id"></span></div>
       <span class="connection-status connecting" id="connection-status">连接中...</span>
     </div>
+    <div class="anniversary-section" id="anniversary-section">
+      <div id="anniversary-list"></div>
+      <button class="anniversary-add-btn" id="btn-add-anniversary" onclick="showAnniversaryForm()">❤️ 添加纪念日</button>
+      <div class="anniversary-form" id="anniversary-form" style="display:none;">
+        <div class="anniversary-form-row">
+          <input type="text" id="anni-name-input" placeholder="纪念日名称" maxlength="50">
+          <input type="date" id="anni-date-input">
+        </div>
+        <div class="anniversary-form-actions">
+          <button class="anniversary-form-cancel" onclick="hideAnniversaryForm()">取消</button>
+          <button class="anniversary-form-save" id="btn-save-anni" onclick="saveAnniversary()">保存</button>
+        </div>
+      </div>
+    </div>
     <div class="todo-list" id="todo-list">
       <div class="empty-state" id="empty-state">
         <div class="empty-icon">🎯</div>
@@ -507,6 +662,7 @@ let roomId = null;
 let todos = [];
 let ws = null;
 let editingTodoId = null;
+let anniversaries = [];
 
 function showPage(page) {
   document.getElementById('page-home').style.display = page === 'home' ? 'flex' : 'none';
@@ -697,6 +853,7 @@ function enterRoom(id) {
   showPage('todo');
   connectWebSocket();
   loadTodos();
+  loadAnniversaries();
   document.getElementById('todo-input').focus();
 }
 
@@ -710,6 +867,7 @@ function leaveRoom() {
   // Clear saved room data
   roomId = null;
   todos = [];
+  anniversaries = [];
   localStorage.removeItem('couple_todo_roomId');
   // Go back to home
   showPage('home');
@@ -776,6 +934,23 @@ function handleWSMessage(msg) {
     case 'todo:deleted':
       todos = todos.filter(t => t.id !== msg.todoId);
       renderTodos();
+      break;
+    case 'anniversary:created':
+      if (!anniversaries.find(a => a.id === msg.anniversary.id)) {
+        anniversaries.push(msg.anniversary);
+        renderAnniversaries();
+      }
+      break;
+    case 'anniversary:updated':
+      const ai = anniversaries.findIndex(a => a.id === msg.anniversary.id);
+      if (ai !== -1) {
+        anniversaries[ai] = msg.anniversary;
+        renderAnniversaries();
+      }
+      break;
+    case 'anniversary:deleted':
+      anniversaries = anniversaries.filter(a => a.id !== msg.anniversaryId);
+      renderAnniversaries();
       break;
   }
 }
@@ -848,6 +1023,140 @@ async function saveEdit(id, newText) {
     showToast('编辑失败');
     renderTodos();
   }
+}
+
+// ─── 纪念日 ─────────────────────────────────────────────
+
+async function loadAnniversaries() {
+  try {
+    const data = await api('GET', `/api/rooms/${roomId}/anniversaries`);
+    anniversaries = data;
+    renderAnniversaries();
+  } catch (e) {
+    console.error('Load anniversaries failed:', e);
+  }
+}
+
+function calcDays(dateStr) {
+  const target = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = today - target;
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function getAnniversaryEmoji(name) {
+  const map = {
+    '在一起': '💑', '纪念日': '🎂', '结婚': '💒', '生日': '🎂',
+    '恋爱': '💕', '求婚': '💍', '领证': '📜', '婚礼': '🎊',
+    '七夕': '🌙', '情人节': '🌹', '圣诞': '🎄', '新年': '🎉',
+    '相识': '🤝', '告白': '💌', '初吻': '😘', '约会': '🍿',
+  };
+  for (const [key, emoji] of Object.entries(map)) {
+    if (name.includes(key)) return emoji;
+  }
+  return '❤️';
+}
+
+function renderAnniversaries() {
+  const container = document.getElementById('anniversary-list');
+  const addBtn = document.getElementById('btn-add-anniversary');
+  const form = document.getElementById('anniversary-form');
+
+  if (anniversaries.length === 0 && editingAnniId === null && form.style.display !== 'flex') {
+    container.innerHTML = '';
+    addBtn.style.display = 'block';
+    return;
+  }
+
+  addBtn.style.display = 'block';
+
+  container.innerHTML = anniversaries.map(a => {
+    const days = calcDays(a.date);
+    const emoji = getAnniversaryEmoji(a.name);
+    const daysText = days >= 0 ? `${days}天` : `${Math.abs(days)}天后`;
+    const label = days >= 0 ? '已在一起' : '倒计时';
+    return `
+      <div class="anniversary-card">
+        <span class="anniversary-emoji">${emoji}</span>
+        <div class="anniversary-info">
+          <div class="anniversary-name">${escHtml(a.name)}</div>
+          <div class="anniversary-date">${formatDate(a.date)}</div>
+        </div>
+        <div class="anniversary-days">
+          <div class="anniversary-days-num">${daysText}</div>
+          <div class="anniversary-days-label">${label}</div>
+        </div>
+        <button class="anniversary-edit" onclick="event.stopPropagation(); editAnniversary('${a.id}')">✎</button>
+      </div>
+    `;
+  }).join('') || '';
+}
+
+function escHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+let editingAnniId = null;
+
+function showAnniversaryForm(anni) {
+  document.getElementById('anniversary-form').style.display = 'flex';
+  document.getElementById('btn-add-anniversary').style.display = 'none';
+  if (anni) {
+    editingAnniId = anni.id;
+    document.getElementById('anni-name-input').value = anni.name;
+    document.getElementById('anni-date-input').value = anni.date;
+  } else {
+    editingAnniId = null;
+    document.getElementById('anni-name-input').value = '';
+    document.getElementById('anni-date-input').value = '';
+  }
+  document.getElementById('anni-name-input').focus();
+}
+
+function hideAnniversaryForm() {
+  document.getElementById('anniversary-form').style.display = 'none';
+  document.getElementById('btn-add-anniversary').style.display = 'block';
+  editingAnniId = null;
+  renderAnniversaries();
+}
+
+async function saveAnniversary() {
+  const name = document.getElementById('anni-name-input').value.trim();
+  const date = document.getElementById('anni-date-input').value;
+
+  if (!name) { showToast('请输入纪念日名称'); return; }
+  if (!date) { showToast('请选择日期'); return; }
+
+  const btn = document.getElementById('btn-save-anni');
+  btn.disabled = true;
+
+  try {
+    if (editingAnniId) {
+      await api('PUT', `/api/rooms/${roomId}/anniversaries/${editingAnniId}`, { name, date });
+    } else {
+      await api('POST', `/api/rooms/${roomId}/anniversaries`, { name, date });
+    }
+    hideAnniversaryForm();
+    loadAnniversaries();
+  } catch (e) {
+    showToast('保存失败');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function editAnniversary(id) {
+  const anni = anniversaries.find(a => a.id === id);
+  if (!anni) return;
+  showAnniversaryForm(anni);
 }
 
 // ─── RENDER ──────────────────────────────────────────────

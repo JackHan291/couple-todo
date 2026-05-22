@@ -25,6 +25,15 @@ db.exec(`
     created_at DATETIME DEFAULT (datetime('now')),
     FOREIGN KEY (room_id) REFERENCES rooms(id)
   );
+
+  CREATE TABLE IF NOT EXISTS anniversaries (
+    id TEXT PRIMARY KEY,
+    room_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    date TEXT NOT NULL,
+    created_at DATETIME DEFAULT (datetime('now')),
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
+  );
 `);
 
 export default db;
