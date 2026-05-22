@@ -454,7 +454,18 @@
       <div id="my-rooms-list" style="display:flex; flex-direction:column; gap:6px;"></div>
     </div>
 
-    <button class="home-btn btn-primary" id="btn-create-room" onclick="createRoom()">✨ 创建房间</button>
+    <div id="create-room-area" style="width:100%; max-width:320px;">
+      <button class="home-btn btn-primary" id="btn-create-room" onclick="toggleCreateRoom()">✨ 创建房间</button>
+      <div id="create-room-custom" style="display:none; flex-direction:column; gap:8px; margin-top:-4px; margin-bottom:4px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input class="room-input" id="create-room-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="可选，留空随机生成" autocomplete="off" style="flex:1;">
+          <button class="home-btn btn-primary" id="btn-create-confirm" onclick="createRoom()" style="width:auto; padding:14px 20px; margin-bottom:0; white-space:nowrap; flex-shrink:0;">确认</button>
+        </div>
+        <div style="text-align:center;">
+          <button onclick="cancelCreateRoom()" style="border:none; background:transparent; color:var(--text-secondary); font-size:13px; cursor:pointer; padding:4px 12px; border-radius:8px;">取消</button>
+        </div>
+      </div>
+    </div>
     <div class="home-divider"><span>或者</span></div>
     <div class="room-input-group">
       <input class="room-input" id="room-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="输入6位房间号" autocomplete="off">
@@ -578,15 +589,49 @@ function showToast(msg) {
 
 // ─── HOME ────────────────────────────────────────────────
 
+let createRoomExpanded = false;
+
+function toggleCreateRoom() {
+  const customArea = document.getElementById('create-room-custom');
+  if (createRoomExpanded) {
+    // Already expanded -- just start creating directly (empty = random)
+    createRoom();
+  } else {
+    createRoomExpanded = true;
+    customArea.style.display = 'flex';
+    document.getElementById('create-room-input').focus();
+    document.getElementById('btn-create-room').textContent = '✨ 创建房间 ▼';
+  }
+}
+
+function cancelCreateRoom() {
+  createRoomExpanded = false;
+  document.getElementById('create-room-custom').style.display = 'none';
+  document.getElementById('btn-create-room').textContent = '✨ 创建房间';
+  document.getElementById('create-room-input').value = '';
+}
+
 async function createRoom() {
   const btn = document.getElementById('btn-create-room');
+  const input = document.getElementById('create-room-input');
+  const custom = input.value.trim();
+
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span>创建中...';
+
   try {
-    const data = await api('POST', '/api/rooms');
+    const body = custom ? { roomId: custom } : {};
+    const data = await api('POST', '/api/rooms', body);
+    cancelCreateRoom();
     enterRoom(data.roomId);
   } catch (e) {
-    showToast('创建失败，请稍后重试');
+    if (e.message === 'room already exists') {
+      showToast('该房间号已被使用');
+    } else if (e.message === 'roomId must be 6 digits') {
+      showToast('房间号必须是6位数字');
+    } else {
+      showToast('创建失败，请稍后重试');
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = '✨ 创建房间';
@@ -632,8 +677,14 @@ document.getElementById('room-input').addEventListener('input', function() {
   this.classList.remove('room-input-error');
   document.getElementById('room-error').classList.remove('visible');
 });
+document.getElementById('create-room-input').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
 document.getElementById('room-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') joinRoom();
+});
+document.getElementById('create-room-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') createRoom();
 });
 
 // ─── ENTER ROOM ──────────────────────────────────────────

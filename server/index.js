@@ -24,10 +24,21 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 // ─── Room API ────────────────────────────────────────────
 
 app.post('/api/rooms', (req, res) => {
-  let roomId;
-  do {
-    roomId = generateRoomCode();
-  } while (db.prepare('SELECT id FROM rooms WHERE id = ?').get(roomId));
+  let roomId = req.body?.roomId;
+
+  if (roomId) {
+    // Custom room ID: validate 6-digit
+    if (!/^\d{6}$/.test(roomId)) {
+      return res.status(400).json({ error: 'roomId must be 6 digits' });
+    }
+    if (db.prepare('SELECT id FROM rooms WHERE id = ?').get(roomId)) {
+      return res.status(409).json({ error: 'room already exists' });
+    }
+  } else {
+    do {
+      roomId = generateRoomCode();
+    } while (db.prepare('SELECT id FROM rooms WHERE id = ?').get(roomId));
+  }
 
   db.prepare('INSERT INTO rooms (id) VALUES (?)').run(roomId);
   console.log(`[Room] Created: ${roomId}`);
